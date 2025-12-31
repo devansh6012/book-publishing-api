@@ -60,7 +60,7 @@ book-publishing-api/
 
 ```bash
 # Clone the repository
-git clone git remote add origin https://github.com/devansh6012/book-publishing-api.git
+git clone https://github.com/devansh6012/book-publishing-api.git
 cd book-publishing-api
 
 # Install dependencies
