@@ -1,0 +1,69 @@
+// Prisma schema for Book Publishing API
+// Using SQLite for simplicity - single file, no external dependencies
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  role        String   @default("reviewer") // 'admin' | 'reviewer'
+  apiKey      String   @unique
+  password    String   // hashed password
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  booksCreated Book[]     @relation("CreatedBy")
+  booksUpdated Book[]     @relation("UpdatedBy")
+  auditLogs    AuditLog[] @relation("Actor")
+}
+
+model Book {
+  id          String   @id @default(uuid())
+  title       String
+  authors     String
+  publishedBy String
+  isDeleted   Boolean  @default(false)  // Soft delete
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  createdById String
+  createdBy   User    @relation("CreatedBy", fields: [createdById], references: [id])
+  updatedById String?
+  updatedBy   User?   @relation("UpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([isDeleted])
+  @@index([createdAt])
+  @@index([title])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  timestamp     DateTime @default(now())
+  entity        String   // 'Book', 'User', etc.
+  entityId      String
+  action        String   // 'create', 'update', 'delete', 'restore', 'login'
+  actorId       String
+  requestId     String?
+  diff          String?  // JSON string of changes (before/after)
+  fieldsChanged String?  // Comma-separated list of changed fields
+
+  // Relations
+  actor User @relation("Actor", fields: [actorId], references: [id])
+
+  @@index([entity])
+  @@index([entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([timestamp])
+  @@index([requestId])
+}
