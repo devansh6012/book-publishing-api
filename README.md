@@ -256,9 +256,9 @@ All filters are optional and combinable:
   "items": [
     {
       "id": "uuid",
-      "title": "Clean Architecture",
-      "authors": "Robert C. Martin",
-      "publishedBy": "Prentice Hall",
+      "title": "Why This Code Works",
+      "authors": "Ankit Verma",
+      "publishedBy": "Penguin",
       "createdBy": { "id": "...", "name": "Admin" },
       "createdAt": "2025-01-11T...",
       "updatedAt": "2025-01-11T..."
@@ -273,9 +273,9 @@ All filters are optional and combinable:
 ```json
 {
   "id": "uuid",
-  "title": "Clean Architecture",
-  "authors": "Robert C. Martin",
-  "publishedBy": "Prentice Hall",
+  "title": "Why This Code Works",
+  "authors": "Ankit Verma",
+  "publishedBy": "Penguin",
   "createdById": "user-uuid",
   "createdAt": "2025-01-11T..."
 }
@@ -300,13 +300,13 @@ curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
 curl -X POST http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
   -H "X-API-Key: admin-api-key" \
   -H "Content-Type: application/json" \
-  -d '{"title":"Clean Architecture","authors":"Robert C. Martin","publishedBy":"Prentice Hall"}'
+  -d '{"title":"Clean System Design","authors":"Robert Bhayia","publishedBy":"Prentice Hall"}'
 
 # Update a book
 curl -X PATCH http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id} \
   -H "X-API-Key: admin-api-key" \
   -H "Content-Type: application/json" \
-  -d '{"title":"Clean Architecture - 2nd Edition"}'
+  -d '{"title":"Clean System Design - 2nd Edition"}'
 
 # Delete a book
 curl -X DELETE http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id} \
