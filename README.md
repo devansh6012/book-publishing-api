@@ -44,7 +44,7 @@ book-publishing-api/
 ├── prisma/
 │   ├── schema.prisma     # Database schema
 │   └── seed.ts           # Seed data
-├── logs/                 # Log files (created automatically in development)
+├── logs/                 # Log files (when LOG_DESTINATION=file)
 └── package.json
 ```
 
@@ -77,12 +77,20 @@ The API will be available at `http://localhost:3000`.
 
 ### Environment Variables
 ```env
+# Database
 DATABASE_URL="file:./dev.db"
+
+# JWT
 JWT_SECRET="super-secret-jwt-key"
+
+# Server
 PORT=3000
 NODE_ENV="development"
+
+# Logging (default: file)
 LOG_LEVEL="info"
-LOG_DESTINATION="console"
+LOG_DESTINATION="file"
+LOG_FILE_PATH="./logs/app.log"
 ```
 
 ## - Audit Trail Configuration
@@ -92,19 +100,37 @@ The audit trail is **config-driven**. To add a new entity, simply update `src/co
 export const auditConfig: AuditConfig = {
   Book: {
     track: true,
-    exclude: ['updatedAt'],
-    redact: [],
+    exclude: ['updatedAt'],    // Fields to exclude from diff
+    redact: [],                // Fields to show as [REDACTED]
   },
   User: {
     track: true,
     exclude: ['updatedAt'],
-    redact: ['password', 'apiKey'],
+    redact: ['password', 'apiKey'],  // Sensitive fields
   },
   // Add new entities here - no other code changes needed!
 };
 ```
 
-**No other code changes required!** The audit system automatically:
+### What's Stored Per Audit Record
+```typescript
+{
+  id: "uuid",                    // Unique audit ID
+  timestamp: "2025-01-11T...",   // When the action occurred
+  entity: "Book",                // Entity type
+  entityId: "book-uuid",         // Affected record ID
+  action: "update",              // create | update | delete | restore
+  actorId: "user-uuid",          // Who performed the action
+  requestId: "req-uuid",         // For tracing
+  diff: {                        // Before/after state
+    before: { title: "Old Title" },
+    after: { title: "New Title" }
+  },
+  fieldsChanged: "title"         // Comma-separated changed fields
+}
+```
+
+**No code changes required to add new entities!** The audit system automatically:
 - Records create/update/delete/restore actions
 - Computes diffs between before/after states
 - Respects exclude/redact configuration
@@ -113,18 +139,33 @@ export const auditConfig: AuditConfig = {
 ## - Logging Configuration
 
 ### Log Destinations
+
+**Default: File** (logs stored locally)
 ```env
-LOG_DESTINATION="console"   # Console (Development)
-LOG_DESTINATION="file"      # File
-LOG_DESTINATION="elastic"   # Elasticsearch
-LOG_DESTINATION="logtail"   # Logtail
+# File logging (DEFAULT)
+LOG_DESTINATION="file"
+LOG_FILE_PATH="./logs/app.log"
+
+# Console (Development)
+LOG_DESTINATION="console"
+
+# Elasticsearch
+LOG_DESTINATION="elastic"
+ELASTIC_NODE="http://localhost:9200"
+ELASTIC_INDEX="book-publishing-logs"
+
+# Logtail
+LOG_DESTINATION="logtail"
+LOGTAIL_SOURCE_TOKEN="your-token"
 ```
 
 ### Log Format
+
+Every log line includes requestId and userId:
 ```json
 {
   "level": "info",
-  "time": "2025-12-31T10:30:00.000Z",
+  "time": "2025-01-11T10:30:00.000Z",
   "msg": "GET /api/books 200 15ms",
   "requestId": "abc-123-def",
   "userId": "user-uuid",
@@ -134,6 +175,24 @@ LOG_DESTINATION="logtail"   # Logtail
   "durationMs": 15
 }
 ```
+
+## - Error Handling
+
+Centralized error middleware returns consistent format with requestId for correlation:
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "title is required",
+    "details": [
+      { "field": "title", "message": "Title is required" }
+    ],
+    "requestId": "abc-123-def"
+  }
+}
+```
+
+**Note:** Stack traces are not exposed in production for security.
 
 ## - Authentication
 
@@ -189,6 +248,46 @@ All filters are optional and combinable:
 - `requestId`: Trace specific request
 - `limit`, `cursor`: Pagination
 
+### Response Formats
+
+**List Books:** `GET /api/books?limit=10`
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "title": "Clean Architecture",
+      "authors": "Robert C. Martin",
+      "publishedBy": "Prentice Hall",
+      "createdBy": { "id": "...", "name": "Admin" },
+      "createdAt": "2025-01-11T...",
+      "updatedAt": "2025-01-11T..."
+    }
+  ],
+  "nextCursor": "eyJpZCI6...",
+  "hasMore": true
+}
+```
+
+**Create Book:** `POST /api/books` → `201 Created`
+```json
+{
+  "id": "uuid",
+  "title": "Clean Architecture",
+  "authors": "Robert C. Martin",
+  "publishedBy": "Prentice Hall",
+  "createdById": "user-uuid",
+  "createdAt": "2025-01-11T..."
+}
+```
+
+**Delete Book:** `DELETE /api/books/:id`
+```json
+{
+  "ok": true
+}
+```
+
 ## - cURL Examples
 
 ### Books CRUD
@@ -227,6 +326,14 @@ curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits \
 # Filter by entity and action
 curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?entity=Book&action=update" \
   -H "X-API-Key: admin-api-key"
+
+# Filter by date range
+curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?from=2025-01-01T00:00:00Z&to=2025-12-31T23:59:59Z" \
+  -H "X-API-Key: admin-api-key"
+
+# Filter by fields changed
+curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?fieldsChanged=title,authors" \
+  -H "X-API-Key: admin-api-key"
 ```
 
 ### Access Control Demo
@@ -234,6 +341,7 @@ curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?entity=Bo
 # Reviewer trying to access audits (403 Forbidden)
 curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits \
   -H "X-API-Key: reviewer-api-key"
+# Response: {"error":{"code":"FORBIDDEN","message":"Access denied. Required roles: admin"}}
 
 # Reviewer can access books
 curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
@@ -245,20 +353,20 @@ curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
 ### Clean Architecture Layers
 ```
 Routes → Controllers → Services → Repositories
-           ↓              ↓           ↓
-       Validation      Business   Data Access
-                        Logic
+             ↓            ↓            ↓
+         Validation    Business    Data Access
+           (Zod)        Logic       (Prisma)
 ```
 
 ### Key Design Decisions
 
 1. **Soft Delete**: Maintains referential integrity, preserves audit history, allows recovery
 
-2. **Cursor Pagination**: O(1) performance, consistent results during pagination
+2. **Cursor Pagination**: O(1) performance regardless of offset, consistent results during data changes
 
-3. **AsyncLocalStorage**: Automatic requestId/userId propagation without passing through functions
+3. **AsyncLocalStorage**: Automatic requestId/userId propagation across the entire request lifecycle without passing through every function
 
-4. **Config-Driven Audit**: Add new entities by updating config only
+4. **Config-Driven Audit**: Add new entities by updating config only - no invasive code changes
 
 ## - Scripts
 ```bash
