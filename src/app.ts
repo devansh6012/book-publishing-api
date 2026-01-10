@@ -46,8 +46,7 @@ const PORT = config.port;
 
 app.listen(PORT, () => {
   logger.info(`Server started`, {
-    port: PORT,
-    env: config.nodeEnv,
+    port: PORT
   });
   console.log(`
 --- Book Publishing API ---
