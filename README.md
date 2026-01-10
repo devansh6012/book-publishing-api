@@ -2,7 +2,7 @@
 
 A minimal Book Publishing API with **config-driven audit trail**, RBAC authentication, and comprehensive Pino logging.
 
-🔗 **Live Demo:** [https://book-publishing-api.onrender.com](https://book-publishing-api.onrender.com)
+**Live Demo:** [http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com](http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com)
 
 ## - Key Features
 
@@ -18,16 +18,26 @@ A minimal Book Publishing API with **config-driven audit trail**, RBAC authentic
 | Environment | Database | Why |
 |-------------|----------|-----|
 | **Local Development** | SQLite | Zero config, single file, fast setup |
-| **Production** | PostgreSQL | Scalable, reliable, industry standard |
+| **Production (AWS)** | PostgreSQL | Scalable, reliable, industry standard |
 
-Switching between databases requires only changing `prisma/schema.prisma`:
-```prisma
-datasource db {
-  provider = "sqlite"      # Local development
-  # provider = "postgresql" # Production
-  url = env("DATABASE_URL")
-}
+## - AWS Architecture
 ```
+┌─────────────┐      ┌─────────────────────────────────────┐
+│   Client    │ ───▶ │         AWS EC2 (t2.micro)          │
+│             │      │                                     │
+└─────────────┘      │  ┌─────────┐      ┌─────────────┐  │
+                     │  │  Nginx  │ ───▶ │   Node.js   │  │
+                     │  │  :80    │      │  (PM2:3000) │  │
+                     │  └─────────┘      └──────┬──────┘  │
+                     │                          │         │
+                     │                  ┌───────▼───────┐ │
+                     │                  │  PostgreSQL   │ │
+                     │                  │    :5432      │ │
+                     │                  └───────────────┘ │
+                     └─────────────────────────────────────┘
+```
+
+**Tech Stack:** AWS EC2 (Ubuntu 22.04) • PostgreSQL 14 • PM2 • Nginx
 
 ## - Project Structure
 ```
@@ -46,7 +56,6 @@ book-publishing-api/
 ├── prisma/
 │   ├── schema.prisma     # Database schema
 │   └── seed.ts           # Seed data
-├── logs/                 # Log files (created automatically)
 └── package.json
 ```
 
@@ -77,52 +86,14 @@ npm run dev
 
 The API will be available at `http://localhost:3000`.
 
-### Environment Variables (Local)
+### Environment Variables
 ```env
-# Database (SQLite for local)
 DATABASE_URL="file:./dev.db"
-
-# JWT
 JWT_SECRET="super-secret-jwt-key"
-JWT_EXPIRES_IN="24h"
-
-# Server
 PORT=3000
 NODE_ENV="development"
-
-# Logging
 LOG_LEVEL="info"
 LOG_DESTINATION="console"
-LOG_FILE_PATH="./logs/app.log"
-```
-
-## - Production Deployment (Render)
-
-The API is deployed on [Render](https://render.com) with PostgreSQL.
-
-### Deployment Steps
-
-1. **Create PostgreSQL Database** on Render (Free tier)
-2. **Create Web Service** connected to this GitHub repo
-3. **Set Build Command:** `npm install && npm run build && npx prisma db push`
-4. **Set Start Command:** `npm start`
-5. **Add Environment Variables:**
-
-| Key | Value |
-|-----|-------|
-| `DATABASE_URL` | PostgreSQL Internal URL from Render |
-| `JWT_SECRET` | Your secret key |
-| `NODE_ENV` | `production` |
-| `LOG_DESTINATION` | `console` |
-| `LOG_LEVEL` | `info` |
-
-### Production Environment Variables
-```env
-DATABASE_URL="postgres://user:password@host:5432/dbname"
-JWT_SECRET="production-secret-key"
-NODE_ENV="production"
-LOG_DESTINATION="console"
-LOG_LEVEL="info"
 ```
 
 ## - Audit Trail Configuration
@@ -132,20 +103,15 @@ The audit trail is **config-driven**. To add a new entity, simply update `src/co
 export const auditConfig: AuditConfig = {
   Book: {
     track: true,
-    exclude: ['updatedAt'],    // Fields to exclude from diff
-    redact: [],                // Fields to show as [REDACTED]
+    exclude: ['updatedAt'],
+    redact: [],
   },
   User: {
     track: true,
     exclude: ['updatedAt'],
-    redact: ['password', 'apiKey'],  // Sensitive fields
+    redact: ['password', 'apiKey'],
   },
   // Add new entities here - no other code changes needed!
-  Publisher: {
-    track: true,
-    exclude: ['updatedAt'],
-    redact: ['taxId'],
-  },
 };
 ```
 
@@ -157,28 +123,15 @@ export const auditConfig: AuditConfig = {
 
 ## - Logging Configuration
 
-### Switching Log Destinations
+### Log Destinations
 ```env
-# Console (Development)
-LOG_DESTINATION="console"
-
-# File
-LOG_DESTINATION="file"
-LOG_FILE_PATH="./logs/app.log"
-
-# Elasticsearch
-LOG_DESTINATION="elastic"
-ELASTIC_NODE="http://localhost:9200"
-ELASTIC_INDEX="book-publishing-logs"
-
-# Logtail
-LOG_DESTINATION="logtail"
-LOGTAIL_SOURCE_TOKEN="token"
+LOG_DESTINATION="console"   # Console (Development)
+LOG_DESTINATION="file"      # File
+LOG_DESTINATION="elastic"   # Elasticsearch
+LOG_DESTINATION="logtail"   # Logtail
 ```
 
 ### Log Format
-
-Every log line includes:
 ```json
 {
   "level": "info",
@@ -195,30 +148,24 @@ Every log line includes:
 
 ## - Authentication
 
-The API supports two authentication methods:
-
-### 1. API Key
+### API Key
 ```bash
-curl -H "X-API-Key: admin-api-key" https://book-publishing-api.onrender.com/api/books
+curl -H "X-API-Key: admin-api-key-12345" http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books
 ```
 
-### 2. JWT Token
+### JWT Token
 ```bash
-# Login to get token
-curl -X POST https://book-publishing-api.onrender.com/api/auth/login \
+curl -X POST http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@bookpub.com","password":"admin123"}'
-
-# Use token
-curl -H "Authorization: Bearer YOUR_TOKEN" https://book-publishing-api.onrender.com/api/books
 ```
 
 ### Test Credentials
 
 | Role     | Email                  | Password    | API Key               |
 |----------|------------------------|-------------|-----------------------|
-| Admin    | admin@bookpub.com      | admin123    | admin-api-key   |
-| Reviewer | reviewer@bookpub.com   | reviewer123 | reviewer-api-key|
+| Admin    | admin@bookpub.com      | admin123    | admin-api-key-12345   |
+| Reviewer | reviewer@bookpub.com   | reviewer123 | reviewer-api-key-67890|
 
 ## - API Documentation
 
@@ -255,80 +202,53 @@ All filters are optional and combinable:
 
 ## - cURL Examples
 
-> **Note:** Replace `localhost:3000` with `book-publishing-api.onrender.com` for production.
-
-### Authentication
-```bash
-# Login and get JWT token
-curl -X POST https://book-publishing-api.onrender.com/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@bookpub.com","password":"admin123"}'
-
-# Get current user
-curl https://book-publishing-api.onrender.com/api/auth/me \
-  -H "X-API-Key: admin-api-key"
-```
-
 ### Books CRUD
 ```bash
 # List books
-curl https://book-publishing-api.onrender.com/api/books \
-  -H "X-API-Key: admin-api-key"
+curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
+  -H "X-API-Key: admin-api-key-12345"
 
 # Create a book
-curl -X POST https://book-publishing-api.onrender.com/api/books \
-  -H "X-API-Key: admin-api-key" \
+curl -X POST http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
+  -H "X-API-Key: admin-api-key-12345" \
   -H "Content-Type: application/json" \
-  -d '{
-    "title": "Clean Architecture",
-    "authors": "Robert C. Martin",
-    "publishedBy": "Prentice Hall"
-  }'
+  -d '{"title":"Clean Architecture","authors":"Robert C. Martin","publishedBy":"Prentice Hall"}'
 
 # Update a book
-curl -X PATCH https://book-publishing-api.onrender.com/api/books/{book-id} \
-  -H "X-API-Key: admin-api-key" \
+curl -X PATCH http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id} \
+  -H "X-API-Key: admin-api-key-12345" \
   -H "Content-Type: application/json" \
-  -d '{"title": "Clean Architecture - 2nd Edition"}'
+  -d '{"title":"Clean Architecture - 2nd Edition"}'
 
 # Delete a book
-curl -X DELETE https://book-publishing-api.onrender.com/api/books/{book-id} \
-  -H "X-API-Key: admin-api-key"
+curl -X DELETE http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id} \
+  -H "X-API-Key: admin-api-key-12345"
 
 # Restore a deleted book (admin only)
-curl -X POST https://book-publishing-api.onrender.com/api/books/{book-id}/restore \
-  -H "X-API-Key: admin-api-key"
+curl -X POST http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id}/restore \
+  -H "X-API-Key: admin-api-key-12345"
 ```
 
 ### Audit Trail (Admin Only)
 ```bash
 # List all audits
-curl https://book-publishing-api.onrender.com/api/audits \
-  -H "X-API-Key: admin-api-key"
+curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits \
+  -H "X-API-Key: admin-api-key-12345"
 
-# Filter by entity
-curl "https://book-publishing-api.onrender.com/api/audits?entity=Book" \
-  -H "X-API-Key: admin-api-key"
-
-# Filter by action
-curl "https://book-publishing-api.onrender.com/api/audits?action=update" \
-  -H "X-API-Key: admin-api-key"
-
-# Combined filters
-curl "https://book-publishing-api.onrender.com/api/audits?entity=Book&action=update&limit=5" \
-  -H "X-API-Key: admin-api-key"
+# Filter by entity and action
+curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?entity=Book&action=update" \
+  -H "X-API-Key: admin-api-key-12345"
 ```
 
 ### Access Control Demo
 ```bash
-# Reviewer trying to access audits (should fail with 403)
-curl https://book-publishing-api.onrender.com/api/audits \
-  -H "X-API-Key: reviewer-api-key"
-# Response: {"error":{"code":"FORBIDDEN","message":"Access denied..."}}
+# Reviewer trying to access audits (403 Forbidden)
+curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits \
+  -H "X-API-Key: reviewer-api-key-67890"
 
 # Reviewer can access books
-curl https://book-publishing-api.onrender.com/api/books \
-  -H "X-API-Key: reviewer-api-key"
+curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
+  -H "X-API-Key: reviewer-api-key-67890"
 ```
 
 ## - Architecture
@@ -336,37 +256,28 @@ curl https://book-publishing-api.onrender.com/api/books \
 ### Clean Architecture Layers
 ```
 Routes → Controllers → Services → Repositories
-             ↓           ↓             ↓
-         Validation    Business    Data Access
-                        Logic
+           ↓              ↓           ↓
+    Validation      Business      Data Access
+                     Logic
 ```
 
 ### Key Design Decisions
 
-1. **Soft Delete**: Books are never permanently deleted
-   - Maintains referential integrity
-   - Preserves audit history
-   - Allows data recovery
+1. **Soft Delete**: Maintains referential integrity, preserves audit history, allows recovery
 
-2. **Cursor Pagination**: More efficient than offset-based
-   - O(1) performance regardless of offset
-   - Consistent results during pagination
+2. **Cursor Pagination**: O(1) performance, consistent results during pagination
 
-3. **AsyncLocalStorage**: Request context propagation
-   - Automatic requestId/userId in all logs
-   - Clean separation of concerns
+3. **AsyncLocalStorage**: Automatic requestId/userId propagation without passing through functions
 
-4. **Config-Driven Audit**: Extensibility without code changes
-   - Single source of truth for auditable entities
-   - Field exclusion and redaction
+4. **Config-Driven Audit**: Add new entities by updating config only
 
 ## - Scripts
 ```bash
-npm run dev       # Start development server with hot reload
+npm run dev       # Development server with hot reload
 npm run build     # Build for production
 npm run start     # Start production server
-npm run setup     # Setup database and seed data (local only)
-npm run db:studio # Open Prisma Studio (database UI)
+npm run setup     # Setup database and seed data
+npm run db:studio # Open Prisma Studio
 ```
 
 ## - License
