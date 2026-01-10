@@ -22,22 +22,10 @@ A minimal Book Publishing API with **config-driven audit trail**, RBAC authentic
 
 ## - AWS Architecture
 ```
-┌─────────────┐      ┌─────────────────────────────────────┐
-│   Client    │ ───▶ │         AWS EC2 (t2.micro)          │
-│             │      │                                     │
-└─────────────┘      │  ┌─────────┐      ┌─────────────┐  │
-                     │  │  Nginx  │ ───▶ │   Node.js   │  │
-                     │  │  :80    │      │  (PM2:3000) │  │
-                     │  └─────────┘      └──────┬──────┘  │
-                     │                          │         │
-                     │                  ┌───────▼───────┐ │
-                     │                  │  PostgreSQL   │ │
-                     │                  │    :5432      │ │
-                     │                  └───────────────┘ │
-                     └─────────────────────────────────────┘
+Client → Nginx → Node.js → PostgreSQL
 ```
 
-**Tech Stack:** AWS EC2 (Ubuntu 22.04) • PostgreSQL 14 • PM2 • Nginx
+**Tech Stack:** AWS EC2 (Ubuntu 22.04) • PostgreSQL • PM2 • Nginx
 
 ## - Project Structure
 ```
@@ -150,7 +138,7 @@ LOG_DESTINATION="logtail"   # Logtail
 
 ### API Key
 ```bash
-curl -H "X-API-Key: admin-api-key-12345" http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books
+curl -H "X-API-Key: admin-api-key" http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books
 ```
 
 ### JWT Token
@@ -164,8 +152,8 @@ curl -X POST http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/auth/logi
 
 | Role     | Email                  | Password    | API Key               |
 |----------|------------------------|-------------|-----------------------|
-| Admin    | admin@bookpub.com      | admin123    | admin-api-key-12345   |
-| Reviewer | reviewer@bookpub.com   | reviewer123 | reviewer-api-key-67890|
+| Admin    | admin@bookpub.com      | admin123    | admin-api-key   |
+| Reviewer | reviewer@bookpub.com   | reviewer123 | reviewer-api-key|
 
 ## - API Documentation
 
@@ -206,49 +194,49 @@ All filters are optional and combinable:
 ```bash
 # List books
 curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Create a book
 curl -X POST http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
-  -H "X-API-Key: admin-api-key-12345" \
+  -H "X-API-Key: admin-api-key" \
   -H "Content-Type: application/json" \
   -d '{"title":"Clean Architecture","authors":"Robert C. Martin","publishedBy":"Prentice Hall"}'
 
 # Update a book
 curl -X PATCH http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id} \
-  -H "X-API-Key: admin-api-key-12345" \
+  -H "X-API-Key: admin-api-key" \
   -H "Content-Type: application/json" \
   -d '{"title":"Clean Architecture - 2nd Edition"}'
 
 # Delete a book
 curl -X DELETE http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id} \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Restore a deleted book (admin only)
 curl -X POST http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books/{book-id}/restore \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 ```
 
 ### Audit Trail (Admin Only)
 ```bash
 # List all audits
 curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Filter by entity and action
 curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?entity=Book&action=update" \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 ```
 
 ### Access Control Demo
 ```bash
 # Reviewer trying to access audits (403 Forbidden)
 curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits \
-  -H "X-API-Key: reviewer-api-key-67890"
+  -H "X-API-Key: reviewer-api-key"
 
 # Reviewer can access books
 curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
-  -H "X-API-Key: reviewer-api-key-67890"
+  -H "X-API-Key: reviewer-api-key"
 ```
 
 ## - Architecture
