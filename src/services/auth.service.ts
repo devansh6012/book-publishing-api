@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../types';
 import * as userRepo from '../repositories/user.repository';
 import { AppError } from '../middleware/error.middleware';
@@ -7,7 +7,7 @@ import { createAuditLog } from '../repositories/audit.repository';
 
 /**
  * Auth Service
- * 
+ *
  * Handles authentication and token generation.
  */
 
@@ -28,7 +28,7 @@ interface LoginResult {
  */
 export async function login(email: string, password: string): Promise<LoginResult> {
   const user = await userRepo.validateCredentials(email, password);
-  
+
   if (!user) {
     throw new AppError('INVALID_CREDENTIALS', 'Invalid email or password', 401);
   }
@@ -40,9 +40,12 @@ export async function login(email: string, password: string): Promise<LoginResul
     role: user.role,
   };
 
-  const token = jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn,
-  });
+  // Define sign options with proper typing
+  const signOptions: SignOptions = {
+    expiresIn: '24h',
+  };
+
+  const token = jwt.sign(payload, config.jwt.secret, signOptions);
 
   // Record login in audit log
   await createAuditLog({
@@ -56,7 +59,7 @@ export async function login(email: string, password: string): Promise<LoginResul
   return {
     user,
     token,
-    expiresIn: config.jwt.expiresIn,
+    expiresIn: '24h',
   };
 }
 
@@ -65,11 +68,11 @@ export async function login(email: string, password: string): Promise<LoginResul
  */
 export async function getCurrentUser(userId: string): Promise<User> {
   const user = await userRepo.findUserById(userId);
-  
+
   if (!user) {
     throw new AppError('NOT_FOUND', 'User not found', 404);
   }
-  
+
   return user;
 }
 
@@ -79,7 +82,7 @@ export async function getCurrentUser(userId: string): Promise<User> {
 export function verifyToken(token: string): TokenPayload {
   try {
     return jwt.verify(token, config.jwt.secret) as TokenPayload;
-  } catch (error) {
+  } catch {
     throw new AppError('INVALID_TOKEN', 'Invalid or expired token', 401);
   }
 }

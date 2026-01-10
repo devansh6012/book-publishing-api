@@ -132,4 +132,3 @@ export function createLogger(): Logger {
 // Default logger instance
 export const logger = createLogger();
 
-export { LogConfig, LogDestination };

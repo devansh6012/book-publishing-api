@@ -33,9 +33,9 @@ export class AppError extends Error {
  * Format Zod validation errors
  */
 function formatZodError(error: ZodError): { field: string; message: string }[] {
-  return error.errors.map((err) => ({
-    field: err.path.join('.'),
-    message: err.message,
+  return error.issues.map((issue) => ({
+    field: issue.path.join('.'),
+    message: issue.message,
   }));
 }
 

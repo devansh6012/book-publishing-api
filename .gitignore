@@ -9,6 +9,11 @@ dist/
 .env.local
 .env.*.local
 
+# Compiled prisma files
+prisma/*.js
+prisma/*.d.ts
+prisma/*.map
+
 # Database
 *.db
 *.db-journal

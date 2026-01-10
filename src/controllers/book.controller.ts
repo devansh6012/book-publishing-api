@@ -50,7 +50,7 @@ export async function createBook(req: AuthenticatedRequest, res: Response): Prom
 
   const book = await bookService.createBook(data, userId);
 
-  res.status(201).json({ id: book.id, ...book });
+  res.status(201).json(book);
 }
 
 /**
