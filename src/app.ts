@@ -72,9 +72,9 @@ Health check: http://localhost:${PORT}/api/health
 
 - Test Credentials:
    Admin:    admin@bookpub.com / admin123
-             API Key: admin-api-key-12345
+             API Key: admin-api-key
    Reviewer: reviewer@bookpub.com / reviewer123
-             API Key: reviewer-api-key-67890
+             API Key: reviewer-api-key
 `);
 });
 

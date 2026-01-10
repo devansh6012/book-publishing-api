@@ -199,7 +199,7 @@ The API supports two authentication methods:
 
 ### 1. API Key
 ```bash
-curl -H "X-API-Key: admin-api-key-12345" https://book-publishing-api.onrender.com/api/books
+curl -H "X-API-Key: admin-api-key" https://book-publishing-api.onrender.com/api/books
 ```
 
 ### 2. JWT Token
@@ -217,8 +217,8 @@ curl -H "Authorization: Bearer YOUR_TOKEN" https://book-publishing-api.onrender.
 
 | Role     | Email                  | Password    | API Key               |
 |----------|------------------------|-------------|-----------------------|
-| Admin    | admin@bookpub.com      | admin123    | admin-api-key-12345   |
-| Reviewer | reviewer@bookpub.com   | reviewer123 | reviewer-api-key-67890|
+| Admin    | admin@bookpub.com      | admin123    | admin-api-key   |
+| Reviewer | reviewer@bookpub.com   | reviewer123 | reviewer-api-key|
 
 ## - API Documentation
 
@@ -266,18 +266,18 @@ curl -X POST https://book-publishing-api.onrender.com/api/auth/login \
 
 # Get current user
 curl https://book-publishing-api.onrender.com/api/auth/me \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 ```
 
 ### Books CRUD
 ```bash
 # List books
 curl https://book-publishing-api.onrender.com/api/books \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Create a book
 curl -X POST https://book-publishing-api.onrender.com/api/books \
-  -H "X-API-Key: admin-api-key-12345" \
+  -H "X-API-Key: admin-api-key" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Clean Architecture",
@@ -287,48 +287,48 @@ curl -X POST https://book-publishing-api.onrender.com/api/books \
 
 # Update a book
 curl -X PATCH https://book-publishing-api.onrender.com/api/books/{book-id} \
-  -H "X-API-Key: admin-api-key-12345" \
+  -H "X-API-Key: admin-api-key" \
   -H "Content-Type: application/json" \
   -d '{"title": "Clean Architecture - 2nd Edition"}'
 
 # Delete a book
 curl -X DELETE https://book-publishing-api.onrender.com/api/books/{book-id} \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Restore a deleted book (admin only)
 curl -X POST https://book-publishing-api.onrender.com/api/books/{book-id}/restore \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 ```
 
 ### Audit Trail (Admin Only)
 ```bash
 # List all audits
 curl https://book-publishing-api.onrender.com/api/audits \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Filter by entity
 curl "https://book-publishing-api.onrender.com/api/audits?entity=Book" \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Filter by action
 curl "https://book-publishing-api.onrender.com/api/audits?action=update" \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 
 # Combined filters
 curl "https://book-publishing-api.onrender.com/api/audits?entity=Book&action=update&limit=5" \
-  -H "X-API-Key: admin-api-key-12345"
+  -H "X-API-Key: admin-api-key"
 ```
 
 ### Access Control Demo
 ```bash
 # Reviewer trying to access audits (should fail with 403)
 curl https://book-publishing-api.onrender.com/api/audits \
-  -H "X-API-Key: reviewer-api-key-67890"
+  -H "X-API-Key: reviewer-api-key"
 # Response: {"error":{"code":"FORBIDDEN","message":"Access denied..."}}
 
 # Reviewer can access books
 curl https://book-publishing-api.onrender.com/api/books \
-  -H "X-API-Key: reviewer-api-key-67890"
+  -H "X-API-Key: reviewer-api-key"
 ```
 
 ## - Architecture
