@@ -44,6 +44,7 @@ book-publishing-api/
 ├── prisma/
 │   ├── schema.prisma     # Database schema
 │   └── seed.ts           # Seed data
+├── logs/                 # Log files (created automatically in development)
 └── package.json
 ```
 
@@ -245,8 +246,8 @@ curl http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/books \
 ```
 Routes → Controllers → Services → Repositories
            ↓              ↓           ↓
-    Validation      Business      Data Access
-                     Logic
+       Validation      Business   Data Access
+                        Logic
 ```
 
 ### Key Design Decisions
