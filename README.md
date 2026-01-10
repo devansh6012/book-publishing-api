@@ -4,7 +4,7 @@ A minimal Book Publishing API with **config-driven audit trail**, RBAC authentic
 
 🔗 **Live Demo:** [https://book-publishing-api.onrender.com](https://book-publishing-api.onrender.com)
 
-## 🎯 Key Features
+## - Key Features
 
 - **Config-Driven Audit Trail**: Add new entities to tracking by updating a single config file
 - **Role-Based Access Control**: Admin and reviewer roles with proper authorization
@@ -13,7 +13,7 @@ A minimal Book Publishing API with **config-driven audit trail**, RBAC authentic
 - **Soft Delete**: Maintains data integrity and audit history
 - **Request Tracing**: AsyncLocalStorage for request context propagation
 
-## 🗄️ Database Choice
+## - Database Choice
 
 | Environment | Database | Why |
 |-------------|----------|-----|
@@ -29,7 +29,7 @@ datasource db {
 }
 ```
 
-## 📁 Project Structure
+## - Project Structure
 ```
 book-publishing-api/
 ├── src/
@@ -50,7 +50,7 @@ book-publishing-api/
 └── package.json
 ```
 
-## 🚀 Quick Start (Local Development)
+## - Quick Start (Local Development)
 
 ### Prerequisites
 - Node.js >= 18
@@ -96,7 +96,7 @@ LOG_DESTINATION="console"
 LOG_FILE_PATH="./logs/app.log"
 ```
 
-## ☁️ Production Deployment (Render)
+## - Production Deployment (Render)
 
 The API is deployed on [Render](https://render.com) with PostgreSQL.
 
@@ -119,13 +119,13 @@ The API is deployed on [Render](https://render.com) with PostgreSQL.
 ### Production Environment Variables
 ```env
 DATABASE_URL="postgres://user:password@host:5432/dbname"
-JWT_SECRET="your-production-secret-key"
+JWT_SECRET="production-secret-key"
 NODE_ENV="production"
 LOG_DESTINATION="console"
 LOG_LEVEL="info"
 ```
 
-## 📝 Audit Trail Configuration
+## - Audit Trail Configuration
 
 The audit trail is **config-driven**. To add a new entity, simply update `src/config/audit.config.ts`:
 ```typescript
@@ -155,7 +155,7 @@ export const auditConfig: AuditConfig = {
 - Respects exclude/redact configuration
 - Captures requestId for traceability
 
-## 📋 Logging Configuration
+## - Logging Configuration
 
 ### Switching Log Destinations
 ```env
@@ -173,7 +173,7 @@ ELASTIC_INDEX="book-publishing-logs"
 
 # Logtail
 LOG_DESTINATION="logtail"
-LOGTAIL_SOURCE_TOKEN="your-token"
+LOGTAIL_SOURCE_TOKEN="token"
 ```
 
 ### Log Format
@@ -193,7 +193,7 @@ Every log line includes:
 }
 ```
 
-## 🔐 Authentication
+## - Authentication
 
 The API supports two authentication methods:
 
@@ -220,7 +220,7 @@ curl -H "Authorization: Bearer YOUR_TOKEN" https://book-publishing-api.onrender.
 | Admin    | admin@bookpub.com      | admin123    | admin-api-key-12345   |
 | Reviewer | reviewer@bookpub.com   | reviewer123 | reviewer-api-key-67890|
 
-## 📖 API Documentation
+## - API Documentation
 
 ### Books
 
@@ -253,7 +253,7 @@ All filters are optional and combinable:
 - `requestId`: Trace specific request
 - `limit`, `cursor`: Pagination
 
-## 🧪 cURL Examples
+## - cURL Examples
 
 > **Note:** Replace `localhost:3000` with `book-publishing-api.onrender.com` for production.
 
@@ -331,14 +331,14 @@ curl https://book-publishing-api.onrender.com/api/books \
   -H "X-API-Key: reviewer-api-key-67890"
 ```
 
-## 🏗️ Architecture
+## - Architecture
 
 ### Clean Architecture Layers
 ```
 Routes → Controllers → Services → Repositories
-           ↓              ↓           ↓
-    Validation      Business      Data Access
-                     Logic
+             ↓           ↓             ↓
+         Validation    Business    Data Access
+                        Logic
 ```
 
 ### Key Design Decisions
@@ -360,7 +360,7 @@ Routes → Controllers → Services → Repositories
    - Single source of truth for auditable entities
    - Field exclusion and redaction
 
-## 📜 Scripts
+## - Scripts
 ```bash
 npm run dev       # Start development server with hot reload
 npm run build     # Build for production
@@ -369,6 +369,6 @@ npm run setup     # Setup database and seed data (local only)
 npm run db:studio # Open Prisma Studio (database UI)
 ```
 
-## 📄 License
+## - License
 
 MIT
