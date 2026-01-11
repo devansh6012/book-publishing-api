@@ -387,7 +387,7 @@ curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?action=up
 curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?from=2025-01-01T00:00:00Z&to=2025-12-31T23:59:59Z" \
   -H "X-API-Key: admin-api-key"
 
-# Filter by fields changed
+# Filter by fields changed (returns records where ANY of these fields changed)
 curl "http://ec2-3-7-71-71.ap-south-1.compute.amazonaws.com/api/audits?fieldsChanged=title,authors" \
   -H "X-API-Key: admin-api-key"
 
