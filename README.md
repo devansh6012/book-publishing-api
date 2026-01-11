@@ -46,7 +46,7 @@ datasource db {
 Client → Nginx → Node.js → PostgreSQL
 ```
 
-**Tech Stack:** AWS EC2 (Ubuntu 22.04) • PostgreSQL • PM2 • Nginx
+**Tech Stack:** AWS EC2 (Ubuntu 24.04) • PostgreSQL • PM2 • Nginx
 
 ## - Project Structure
 ```
